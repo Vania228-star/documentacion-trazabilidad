@@ -30,14 +30,20 @@ pipeline {
 
         stage('Version Control') {
             steps {
-                echo 'Subiendo la documentación generada al repositorio'
-                sh '''
-                    git config user.name "Jenkins"
-                    git config user.email "jenkins@ci.local"
-                    git add docs/
-                    git diff --cached --quiet || git commit -m "docs: actualización automática de documentación [skip ci]"
-                    git push origin HEAD:main || echo "Sin cambios que subir"
-                '''
+                echo '=== Etapa 4: VERSION CONTROL - Publicar docs en Git ==='
+                withCredentials([usernamePassword(credentialsId: 'github-creds', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
+                    sh '''
+                        git config user.name "Jenkins"
+                        git config user.email "jenkins@ci.local"
+                        git add docs/
+                        if git diff --cached --quiet; then
+                            echo "Documentacion actualizada. Nada que commitear."
+                        else
+                            git commit -m "docs: actualizacion automatica de documentacion [skip ci]"
+                            git push https://${GIT_USER}:${GIT_PASS}@github.com/Vania228-star/documentacion-trazabilidad.git HEAD:main
+                        fi
+                    '''
+                }
             }
         }
 
