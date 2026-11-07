@@ -6,11 +6,13 @@ pipeline {
         REPO_NAME   = 'documentacion-trazabilidad'
     }
 
-    stages {
         stage('Build') {
             steps {
-                echo 'Instalando dependencias del proyecto'
-                sh 'pip3 install -r requirements.txt'
+                echo '=== Etapa 1: BUILD - Instalar dependencias ==='
+                sh '''
+                    pip3 install --break-system-packages -r requirements.txt
+                    python3 -c "import flask, pytest; print('Dependencias instaladas OK')"
+                '''
             }
         }
 
@@ -49,15 +51,16 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                echo 'Desplegando la aplicación en entorno de prueba'
+                echo '=== Etapa 5: DEPLOY - Entorno de pruebas ==='
                 sh '''
+                    pkill -f "python3 app.py" || true
                     nohup python3 app.py > app.log 2>&1 &
                     sleep 5
-                    curl -s "http://localhost:5000/hello?name=Prueba" && echo ""
+                    curl -s "http://localhost:5000/hello?name=Prueba"
+                    echo ""
                 '''
             }
         }
-    }
 
     post {
         success {
